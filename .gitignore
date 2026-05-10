@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Local databases and logs
+*.log
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large models and temp files
+temp/
+backend/temp/
+backend/output/
+backend/models/
+*.ckpt
+*.onnx
+*.pth
+*.bin
+*.yaml
+download_checks.json
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+Report/*.pdf
+Report/*.aux
+Report/*.log
+Report/*.out
+Report/*.toc

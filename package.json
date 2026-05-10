@@ -1,0 +1,16 @@
+{
+  "name": "one-world-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --dir one-world-frontend/one-world-frontend dev",
+    "build": "pnpm --dir one-world-frontend/one-world-frontend build",
+    "lint": "pnpm --dir one-world-frontend/one-world-frontend lint",
+    "typecheck": "pnpm --dir one-world-frontend/one-world-frontend typecheck",
+    "backend": "cd backend && python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "postprocessing": "^6.39.1",
+    "three": "^0.184.0"
+  }
+}

@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.env
+temp/uploads/*
+temp/outputs/*
+models/ai/**/*.pth
+models/ai/**/*.pt
+models/ai/**/*.onnx
+models/ai/**/*.bin
+models/ai/**/*.safetensors
+!temp/uploads/.gitkeep
+!temp/outputs/.gitkeep
+!models/ai/.gitkeep
+
