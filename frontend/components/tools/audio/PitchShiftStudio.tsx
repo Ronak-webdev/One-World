@@ -242,7 +242,7 @@ export function PitchShiftStudio({ toolkit, tool }: { toolkit: string; tool: Too
             <div className="w-full max-w-2xl">
               <WorkspaceDropZone
                 accepted={tool.accepted}
-                onFile={(f) => upload(f, {}, true)} // Just upload locally for preview
+                onFile={(f) => upload(f, {})} // Just upload locally for preview
               />
             </div>
           </motion.div>
