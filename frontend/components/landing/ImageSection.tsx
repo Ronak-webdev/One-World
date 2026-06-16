@@ -25,8 +25,8 @@ export function ImageSection() {
         <div>
         <div className="aspect-video w-full overflow-hidden rounded-2xl shadow-2xl">
           <BeforeAfter 
-            beforeImage="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1000"
-            afterImage="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1000&sepia=1"
+            beforeImage="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1000&blur=50"
+            afterImage="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1000"
           />
         </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">

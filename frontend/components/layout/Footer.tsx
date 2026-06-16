@@ -20,8 +20,18 @@ export function Footer() {
             <Twitter size={18} />
           </div>
         </div>
-        <FooterColumn title="Product" items={[...toolkitLinks.map((link) => link.label), "Changelog", "Roadmap"]} />
-        <FooterColumn title="Resources" items={resources} />
+        <FooterColumn 
+          title="Product" 
+          items={[
+            ...toolkitLinks, 
+            { label: "Changelog", href: "#" }, 
+            { label: "Roadmap", href: "#" }
+          ]} 
+        />
+        <FooterColumn 
+          title="Resources" 
+          items={resources.map(r => ({ label: r, href: "#" }))} 
+        />
         <div>
           <h3 className="text-xs font-semibold uppercase text-white">Team</h3>
           <p className="mt-4 text-sm leading-6 text-text-darkSecondary">Built by Ronak, Satvik, and Dhruv.</p>
@@ -38,14 +48,14 @@ export function Footer() {
   );
 }
 
-function FooterColumn({ title, items }: { title: string; items: string[] }) {
+function FooterColumn({ title, items }: { title: string; items: { label: string; href: string }[] }) {
   return (
     <div>
       <h3 className="text-xs font-semibold uppercase text-white">{title}</h3>
       <div className="mt-4 flex flex-col gap-3 text-sm text-text-darkSecondary">
         {items.map((item) => (
-          <Link href="/" key={item} className="transition hover:text-white">
-            {item}
+          <Link href={item.href} key={item.label} className="transition hover:text-white">
+            {item.label}
           </Link>
         ))}
       </div>
