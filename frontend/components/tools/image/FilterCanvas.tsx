@@ -42,6 +42,8 @@ export function FilterCanvas({ image, settings, compareMode }: FilterCanvasProps
   // Comparison slider value (0-100)
   const sliderX = useMotionValue(50);
   const springX = useSpring(sliderX, { stiffness: 300, damping: 30 });
+  const clipPathTransform = useTransform(springX, (v) => `inset(0 0 0 ${v}%)`);
+  const sliderLeftTransform = useTransform(springX, (v) => `${v}%`);
   
   // Load image
   useEffect(() => {
@@ -172,7 +174,7 @@ export function FilterCanvas({ image, settings, compareMode }: FilterCanvasProps
             <motion.div 
               className="absolute inset-0 z-10 overflow-hidden"
               style={{ 
-                clipPath: compareMode ? useTransform(springX, (v) => `inset(0 0 0 ${v}%)`) : "none"
+                clipPath: compareMode ? clipPathTransform : "none"
               }}
             >
               <div className="relative h-full w-full">
@@ -249,7 +251,7 @@ export function FilterCanvas({ image, settings, compareMode }: FilterCanvasProps
       {compareMode && isLoaded && (
         <motion.div 
           className="absolute inset-y-0 z-30 w-0.5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] pointer-events-none"
-          style={{ left: useTransform(springX, (v) => `${v}%`) }}
+          style={{ left: sliderLeftTransform }}
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/60 backdrop-blur-md shadow-xl">
             <div className="flex gap-0.5">
