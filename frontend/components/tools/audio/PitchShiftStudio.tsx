@@ -56,7 +56,6 @@ export function PitchShiftStudio({ toolkit, tool }: { toolkit: string; tool: Too
 
   // --- 1. Init Audio Graph ---
   useEffect(() => {
-    let _player: Tone.Player | null = null;
     let _pitch: Tone.PitchShift | null = null;
     let _reverb: Tone.Reverb | null = null;
     let _delay: Tone.FeedbackDelay | null = null;
@@ -77,7 +76,6 @@ export function PitchShiftStudio({ toolkit, tool }: { toolkit: string; tool: Too
     };
     initGraph();
     return () => {
-        _player?.dispose();
         _pitch?.dispose();
         _reverb?.dispose();
         _delay?.dispose();
