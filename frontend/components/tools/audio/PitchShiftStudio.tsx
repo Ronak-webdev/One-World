@@ -56,11 +56,11 @@ export function PitchShiftStudio({ toolkit, tool }: { toolkit: string; tool: Too
 
   // --- 1. Init Audio Graph ---
   useEffect(() => {
-    let _player: Tone.Player;
-    let _pitch: Tone.PitchShift;
-    let _reverb: Tone.Reverb;
-    let _delay: Tone.FeedbackDelay;
-    let _dist: Tone.Distortion;
+    let _player: Tone.Player | null = null;
+    let _pitch: Tone.PitchShift | null = null;
+    let _reverb: Tone.Reverb | null = null;
+    let _delay: Tone.FeedbackDelay | null = null;
+    let _dist: Tone.Distortion | null = null;
 
     const initGraph = async () => {
         await Tone.start();
