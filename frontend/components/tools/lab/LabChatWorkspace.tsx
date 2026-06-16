@@ -190,11 +190,6 @@ export function LabChatWorkspace({ toolkit, tool }: { toolkit: string; tool: Too
 
   return (
     <>
-      <style>{`
-        .chat-scroll-area::-webkit-scrollbar { display: none; }
-        .chat-scroll-area { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-
       {/* 
         KEY FIX: 
         - position: relative + inset-0 = fills parent completely regardless of parent's height setup
@@ -227,18 +222,7 @@ export function LabChatWorkspace({ toolkit, tool }: { toolkit: string; tool: Too
           - overflowY: auto = enables scroll when content overflows
         */}
         <div
-          className="chat-scroll-area"
-          style={{
-            flex: 1,
-            minHeight: 0,          // ← this is the magic line
-            overflowY: "auto",
-            overflowX: "hidden",
-            position: "relative",
-            zIndex: 10,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
+          className="chat-scroll-area w-full overflow-y-auto overflow-x-hidden relative z-10 flex flex-col items-center flex-1 min-h-0"
         >
           <div style={{ width: "100%", maxWidth: "740px", padding: "32px 16px" }}>
             <AnimatePresence mode="wait">
