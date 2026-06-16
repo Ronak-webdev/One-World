@@ -266,6 +266,7 @@ export function SliderControl({
   min = 0,
   max = 100,
   step = 1,
+  formatValue,
   onChange,
 }: {
   label: string;
