@@ -10,11 +10,27 @@ from core.job_queue import create_job, run_job
 router = APIRouter()
 
 
+def _process_single_image(source: Path, fmt: str) -> None:
+    from PIL import Image
+    out = source.with_suffix(f".{fmt}")
+    with Image.open(source) as image:
+        save_format = "JPEG" if fmt in {"jpg", "jpeg"} else fmt.upper()
+        # Preserve alpha channel if possible
+        if save_format in {"JPEG", "BMP"}:
+            img_to_save = image.convert("RGB")
+        elif image.mode in ("RGBA", "P"):
+            img_to_save = image.convert("RGBA")
+        else:
+            img_to_save = image.convert("RGB")
+            
+        img_to_save.save(out, format=save_format, quality=95 if save_format in {"JPEG", "WEBP"} else None)
+        
+    if out != source:
+        source.unlink(missing_ok=True)
+
+
 def process_batch(input_path: Path, output_format: str, job_id: str) -> Path:
-    try:
-        from PIL import Image
-    except Exception as exc:
-        raise NotImplementedError("Pillow is required for batch image processing") from exc
+    from concurrent.futures import ThreadPoolExecutor
 
     if input_path.suffix.lower() != ".zip":
         raise RuntimeError("Batch processor expects a zip archive")
@@ -22,18 +38,24 @@ def process_batch(input_path: Path, output_format: str, job_id: str) -> Path:
     work_dir = settings.output_dir / f"{job_id}-batch"
     work_dir.mkdir(parents=True, exist_ok=True)
     fmt = output_format.lower().strip(".")
+    
     with zipfile.ZipFile(input_path) as zf:
         zf.extractall(work_dir)
-    for source in work_dir.rglob("*"):
-        if source.is_file() and source.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff"}:
-            out = source.with_suffix(f".{fmt}")
-            with Image.open(source) as image:
-                save_format = "JPEG" if fmt in {"jpg", "jpeg"} else fmt.upper()
-                image.convert("RGB" if save_format == "JPEG" else image.mode).save(out, format=save_format)
-            if out != source:
-                source.unlink(missing_ok=True)
+        
+    images_to_process = [
+        source for source in work_dir.rglob("*") 
+        if source.is_file() and source.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff"}
+    ]
+    
+    # Process images concurrently
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(_process_single_image, source, fmt) for source in images_to_process]
+        for future in futures:
+            future.result() # Raise any exceptions
+
     archive_base = output_path(job_id, ".zip").with_suffix("")
-    return Path(__import__("shutil").make_archive(str(archive_base), "zip", work_dir))
+    import shutil
+    return Path(shutil.make_archive(str(archive_base), "zip", work_dir))
 
 
 @router.post("/batch")

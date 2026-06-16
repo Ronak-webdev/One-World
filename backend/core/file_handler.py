@@ -49,8 +49,9 @@ def resolve_output(path: str | Path) -> Path:
     return resolved
 
 
-def download_response(path: str | Path, filename: str | None = None) -> FileResponse:
+def download_response(path: str | Path, filename: str | None = None, inline: bool = False) -> FileResponse:
     resolved = resolve_output(path)
     media_type = mimetypes.guess_type(str(resolved))[0] or "application/octet-stream"
-    return FileResponse(resolved, media_type=media_type, filename=filename or resolved.name)
+    disposition = "inline" if inline else "attachment"
+    return FileResponse(resolved, media_type=media_type, filename=filename or resolved.name, content_disposition_type=disposition)
 

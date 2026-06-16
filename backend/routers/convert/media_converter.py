@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile
 
 from core.file_handler import output_path, save_upload
-from core.job_queue import add_status_download_routes, create_job, run_job
+from core.job_queue import create_job, run_job
 from core.media import require_binary, run_checked
 
 router = APIRouter()
@@ -35,7 +35,3 @@ async def gif_to_mp4(background_tasks: BackgroundTasks, file: UploadFile = File(
     create_job("convert", "gif-to-mp4", job_id, original_filename)
     background_tasks.add_task(run_job, job_id, lambda path: process_media(path, "mp4", job_id), input_path)
     return {"job_id": job_id, "status": "queued"}
-
-
-add_status_download_routes(router, "convert")
-

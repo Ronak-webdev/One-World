@@ -10,6 +10,12 @@ Pillow
 rembg
 basicsr
 realesrgan
+gfpgan
+simple-lama-inpainting
+transformers
+torch
+torchvision
+opencv-python-headless
 pdf2docx
 PyMuPDF
 python-pptx
@@ -28,3 +34,4 @@ faster-whisper
 audio-separator
 numpy<2
 onnxruntime-gpu
+timm

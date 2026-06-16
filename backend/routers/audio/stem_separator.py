@@ -1,75 +1,82 @@
-import shutil
-import subprocess
 from pathlib import Path
-
 from fastapi import APIRouter, BackgroundTasks, File, UploadFile
-
-from core.config import settings
 from core.file_handler import output_path
-from core.job_queue import enqueue_upload_job, get_job
+from core.config import settings
 
 router = APIRouter()
 
-
-def process_stems(input_path: Path) -> Path:
-    demucs = shutil.which("demucs")
-    if not demucs:
-        raise NotImplementedError("demucs executable is not available on PATH")
-    job_id = input_path.stem
-    work_dir = settings.output_dir / f"{job_id}-stems"
-    cmd = [demucs, "-n", "htdemucs", "--out", str(work_dir), str(input_path)]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or "Demucs stem separation failed")
+def process_stem_separation(input_path: Path, job_id: str) -> dict[str, Path]:
+    import subprocess
+    import shutil
+    from core.config import settings
     
-    # Organize and rename output files
-    final_outputs = []
-    job = get_job(job_id)
-    orig_base = Path(job.original_filename).stem
+    # Demucs output directory
+    out_dir = settings.output_dir / job_id
+    out_dir.mkdir(parents=True, exist_ok=True)
     
-    # Demucs outputs are typically in work_dir/htdemucs/job_id/
-    search_dir = work_dir / "htdemucs" / job_id
-    if not search_dir.exists():
-        # Fallback to work_dir if structure is different
-        search_dir = work_dir
-
-    for p in search_dir.rglob("*"):
-        if p.is_file() and p.suffix.lower() in (".wav", ".flac", ".mp3", ".m4a", ".ogg"):
-            stem_name = p.stem
-            new_name = f"{orig_base}_{stem_name.capitalize()}{p.suffix}"
+    print(f"[Backend] Running Demucs for job {job_id} on {input_path}")
+    try:
+        # Use demucs as a subprocess to keep memory clean and see real-time progress in console
+        # htdemucs is the default high-quality model
+        cmd = [
+            "python", "-m", "demucs.separate",
+            "-n", "htdemucs",
+            "--out", str(out_dir),
+            str(input_path)
+        ]
+        
+        # Add GPU flag if enabled
+        if settings.gpu_enabled:
+            cmd.insert(3, "-d")
+            cmd.insert(4, "cuda")
             
-            # Move to out_dir (flat)
-            new_path = settings.output_dir / f"{job_id}_stems" / new_name
-            new_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(p), str(new_path))
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"[Backend] Demucs finished for job {job_id}")
+        
+        # Demucs creates: out_dir / htdemucs / input_filename_stem / [drums, bass, vocals, other].wav
+        # We need to find these and move them to a flatter structure or just map them
+        model_name = "htdemucs"
+        track_name = input_path.stem
+        search_dir = out_dir / model_name / track_name
+        
+        stems = {}
+        for stem in ["drums", "bass", "vocals", "other"]:
+            found_path = search_dir / f"{stem}.wav"
+            if found_path.exists():
+                # Move to the final output name we expect
+                final_path = settings.output_dir / f"{job_id}_{stem}.wav"
+                shutil.move(str(found_path), str(final_path))
+                stems[stem] = final_path
+        
+        # Cleanup demucs temp dir
+        shutil.rmtree(out_dir, ignore_errors=True)
+        
+        if not stems:
+            raise RuntimeError("Demucs failed to produce any stems")
             
-            final_outputs.append({
-                "name": new_name,
-                "label": stem_name.capitalize(),
-                "path": str(new_path)
-            })
-
-    # Sort outputs: Vocals first, then Drums, Bass, Other
-    label_order = {"Vocals": 0, "Drums": 1, "Bass": 2, "Other": 3}
-    final_outputs.sort(key=lambda x: label_order.get(x["label"], 4))
-
-    zip_base = output_path(job_id, ".zip").with_suffix("")
-    # Zip the new flat directory
-    zip_path = Path(shutil.make_archive(str(zip_base), "zip", settings.output_dir / f"{job_id}_stems"))
-    
-    return {
-        "zip": zip_path,
-        "outputs": final_outputs
-    }
-
+        # Cleanup input file
+        if "uploads" in str(input_path):
+            input_path.unlink(missing_ok=True)
+            
+        return stems
+        
+    except subprocess.CalledProcessError as e:
+        print(f"[Backend] Demucs Error: {e.stderr}")
+        raise RuntimeError(f"Demucs process failed: {e.stderr}")
 
 @router.post("/stem-separate")
 async def stem_separate(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> dict:
-    return await enqueue_upload_job(
-        background_tasks=background_tasks,
-        file=file,
-        toolkit="audio",
-        operation="stem-separate",
-        processor=process_stems,
+    from core.file_handler import save_upload
+    from core.job_queue import create_job, run_job
+    
+    job_id, input_path, original_filename = await save_upload(file)
+    create_job("audio", "stem-separate", job_id, original_filename)
+    
+    background_tasks.add_task(
+        run_job, 
+        job_id, 
+        process_stem_separation, 
+        input_path
     )
-
+    
+    return {"job_id": job_id, "status": "queued"}

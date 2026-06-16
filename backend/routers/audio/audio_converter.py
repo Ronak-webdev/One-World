@@ -31,6 +31,3 @@ async def audio_convert(
     background_tasks.add_task(run_job, job_id, lambda path: convert_audio(path, output_format, job_id), input_path)
     return {"job_id": job_id, "status": "queued"}
 
-
-add_status_download_routes(router, "audio")
-
