@@ -273,13 +273,14 @@ export function SliderControl({
   min?: number;
   max?: number;
   step?: number;
+  formatValue?: (v: number) => string | number;
   onChange: (v: number) => void;
 }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
         <span className="text-xs font-semibold text-black/50">{label}</span>
-        <span className="text-xs font-bold text-accent">{value}</span>
+        <span className="text-xs font-bold text-accent">{formatValue ? formatValue(value) : value}</span>
       </div>
       <input
         type="range"
