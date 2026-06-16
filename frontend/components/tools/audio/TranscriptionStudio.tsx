@@ -111,7 +111,6 @@ export function TranscriptionStudio({ toolkit, tool }: { toolkit: string; tool: 
       barWidth: 3,
       barGap: 3,
       barRadius: 4,
-      responsive: true,
       height: 80,
       normalize: true,
       minPxPerSec: 50,
