@@ -185,7 +185,7 @@ export function LabChatWorkspace({ toolkit, tool }: { toolkit: string; tool: Too
   }, [messages, isProcessing]);
 
   useEffect(() => {
-    marked.setOptions({ breaks: true, gfm: true, headerIds: false });
+    marked.setOptions({ breaks: true, gfm: true });
   }, []);
 
   return (
