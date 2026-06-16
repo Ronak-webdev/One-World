@@ -3,7 +3,12 @@ import { Github, Twitter } from "lucide-react";
 
 import { toolkitLinks } from "@/lib/constants";
 
-const resources = ["Documentation", "GitHub", "Model Sources", "License"];
+const resources = [
+  { label: "Documentation", href: "https://github.com/Ronak-webdev/One-World#readme" },
+  { label: "GitHub", href: "https://github.com/Ronak-webdev/One-World" },
+  { label: "Model Sources", href: "https://github.com/Ronak-webdev/One-World" },
+  { label: "License", href: "https://github.com/Ronak-webdev/One-World/blob/main/LICENSE" }
+];
 
 export function Footer() {
   return (
@@ -30,7 +35,7 @@ export function Footer() {
         />
         <FooterColumn 
           title="Resources" 
-          items={resources.map(r => ({ label: r, href: "#" }))} 
+          items={resources} 
         />
         <div>
           <h3 className="text-xs font-semibold uppercase text-white">Team</h3>

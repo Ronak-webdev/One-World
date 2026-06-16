@@ -49,7 +49,7 @@ export function CTASection() {
             </Link>
             <Link 
               className="inline-flex h-[56px] items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-8 text-sm font-medium text-[var(--text-1)] transition-all hover:bg-[var(--surface-2)] hover:border-[var(--text-3)]" 
-              href="https://github.com"
+              href="https://github.com/Ronak-webdev/One-World"
               target="_blank"
             >
               <Github size={18} />
