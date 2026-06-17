@@ -1,4 +1,16 @@
+import os
 import sys
+
+# ─── CRITICAL: Set CPU thread limits BEFORE any library import ──────────────
+# These must be set before torch, numpy, onnxruntime, or any BLAS library
+# is imported, otherwise the thread pools are already created and won't shrink.
+os.environ["OMP_NUM_THREADS"] = "2"
+os.environ["MKL_NUM_THREADS"] = "2"
+os.environ["OPENBLAS_NUM_THREADS"] = "2"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "2"
+os.environ["NUMEXPR_NUM_THREADS"] = "2"
+os.environ["ORT_GLOBAL_THREAD_POOL_SIZE"] = "2"
+
 from pathlib import Path
 import torchvision.transforms.functional as F
 # basicsr expects torchvision.transforms.functional_tensor which was removed in recent torchvision

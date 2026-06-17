@@ -5,64 +5,73 @@ from core.config import settings
 
 router = APIRouter()
 
+def get_demucs_model():
+    from core.model_cache import ModelManager
+    
+    def load_demucs():
+        try:
+            from demucs.pretrained import get_model
+        except ImportError:
+            raise RuntimeError("demucs is missing")
+            
+        print("[Backend] Loading Demucs model (htdemucs)...")
+        model = get_model('htdemucs')
+        
+        from core.gpu_utils import get_device
+        device = get_device()
+        if device == "cuda":
+            model.cuda()
+            
+        return model
+        
+    return ModelManager.get_model("htdemucs", load_demucs)
+
 def process_stem_separation(input_path: Path, job_id: str) -> dict[str, Path]:
-    import subprocess
-    import shutil
-    from core.config import settings
-    
-    # Demucs output directory
-    out_dir = settings.output_dir / job_id
-    out_dir.mkdir(parents=True, exist_ok=True)
-    
-    print(f"[Backend] Running Demucs for job {job_id} on {input_path}")
     try:
-        # Use demucs as a subprocess to keep memory clean and see real-time progress in console
-        # htdemucs is the default high-quality model
-        cmd = [
-            "python", "-m", "demucs.separate",
-            "-n", "htdemucs",
-            "--out", str(out_dir),
-            str(input_path)
-        ]
+        import torch
+        import torchaudio
+        from demucs.apply import apply_model
+        from core.config import settings
+        from core.gpu_utils import get_device
+    except Exception as exc:
+        raise NotImplementedError("demucs and torchaudio are required") from exc
+
+    device = get_device()
+    model = get_demucs_model()
+    
+    # Load audio
+    wav, sr = torchaudio.load(input_path)
+    if device == "cuda":
+        wav = wav.cuda()
         
-        # Add GPU flag if enabled
-        if settings.gpu_enabled:
-            cmd.insert(3, "-d")
-            cmd.insert(4, "cuda")
-            
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(f"[Backend] Demucs finished for job {job_id}")
+    # Convert to Demucs expected shape: [batch, channels, length] and match sample rate
+    if sr != model.samplerate:
+        wav = torchaudio.functional.resample(wav, sr, model.samplerate)
+        sr = model.samplerate
         
-        # Demucs creates: out_dir / htdemucs / input_filename_stem / [drums, bass, vocals, other].wav
-        # We need to find these and move them to a flatter structure or just map them
-        model_name = "htdemucs"
-        track_name = input_path.stem
-        search_dir = out_dir / model_name / track_name
+    wav = wav.unsqueeze(0) # Add batch dimension
+    
+    # Run separation
+    print(f"[Backend] Running Demucs separation on {device}")
+    with torch.inference_mode():
+        sources = apply_model(model, wav, shifts=1, split=True, overlap=0.25)
         
-        stems = {}
-        for stem in ["drums", "bass", "vocals", "other"]:
-            found_path = search_dir / f"{stem}.wav"
-            if found_path.exists():
-                # Move to the final output name we expect
-                final_path = settings.output_dir / f"{job_id}_{stem}.wav"
-                shutil.move(str(found_path), str(final_path))
-                stems[stem] = final_path
+    sources = sources.squeeze(0) # Remove batch dimension [sources, channels, length]
+    
+    stems = {}
+    for i, name in enumerate(model.sources):
+        final_path = settings.output_dir / f"{job_id}_{name}.wav"
+        torchaudio.save(str(final_path), sources[i].cpu(), sr)
+        stems[name] = final_path
         
-        # Cleanup demucs temp dir
-        shutil.rmtree(out_dir, ignore_errors=True)
+    if not stems:
+        raise RuntimeError("Demucs failed to produce any stems")
         
-        if not stems:
-            raise RuntimeError("Demucs failed to produce any stems")
-            
-        # Cleanup input file
-        if "uploads" in str(input_path):
-            input_path.unlink(missing_ok=True)
-            
-        return stems
+    # Cleanup input file
+    if "uploads" in str(input_path):
+        input_path.unlink(missing_ok=True)
         
-    except subprocess.CalledProcessError as e:
-        print(f"[Backend] Demucs Error: {e.stderr}")
-        raise RuntimeError(f"Demucs process failed: {e.stderr}")
+    return stems
 
 @router.post("/stem-separate")
 async def stem_separate(background_tasks: BackgroundTasks, file: UploadFile = File(...)) -> dict:

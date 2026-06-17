@@ -54,10 +54,15 @@ def process_transcribe(input_path: Path, model_name: str, job_id: str) -> Path:
         raise NotImplementedError("faster-whisper is required for transcription") from exc
 
     from core.job_queue import update_job_partial
+    from core.model_cache import ModelManager
     
     device = get_device()
     compute_type = "float16" if device == "cuda" else "int8"
-    model = WhisperModel(model_name, device=device, compute_type=compute_type)
+    
+    def load_whisper():
+        return WhisperModel(model_name, device=device, compute_type=compute_type)
+        
+    model = ModelManager.get_model(f"whisper_{model_name}", load_whisper)
     
     # We use beam_size=5 for balanced accuracy
     segments_gen, info = model.transcribe(str(input_path), word_timestamps=True, beam_size=5)

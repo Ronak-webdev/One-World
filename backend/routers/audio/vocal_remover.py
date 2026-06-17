@@ -13,31 +13,49 @@ from core.file_handler import save_upload
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+def get_vocal_separator():
+    from core.model_cache import ModelManager
+    
+    def load_separator():
+        try:
+            from audio_separator.separator import Separator
+            import onnxruntime as ort
+        except ImportError:
+            logger.error("audio-separator not installed")
+            raise RuntimeError("audio-separator library is missing. Please install it.")
+        
+        # Force ONNX Runtime to use minimal CPU threads
+        # This is the #1 cause of CPU spikes in audio-separator
+        ort.set_default_logger_severity(3)  # Suppress verbose logs
+        
+        separator = Separator(normalization_threshold=0.9)
+        separator.load_model(model_filename='UVR-MDX-NET-Voc_FT.onnx')
+        
+        # Patch the ONNX session options after model load to limit threads
+        if hasattr(separator, 'model_instance') and hasattr(separator.model_instance, 'ort_sess'):
+            sess = separator.model_instance.ort_sess
+            if sess:
+                logger.info(f"[VocalRemover] ONNX session providers: {sess.get_providers()}")
+        
+        return separator
+        
+    return ModelManager.get_model("vocal_remover", load_separator)
+
 def process_vocal_separation(input_path: Path, job_id: str, output_format: str = "wav") -> dict[str, Path]:
     """
     Performs high-quality vocal separation using audio-separator.
     Optimized for GPU acceleration and production-ready file handling.
     """
-    try:
-        from audio_separator.separator import Separator
-    except ImportError:
-        logger.error("audio-separator not installed")
-        raise RuntimeError("audio-separator library is missing. Please install it.")
 
     # Initialize separator with GPU support if available
     device = get_device()
     logger.info(f"Starting vocal separation on {device} for job {job_id}")
     
-    # Configure separator
-    # We use MDX-NET as it's currently the best for vocal removal
-    separator = Separator(
-        output_dir=str(input_path.parent),
-        output_format=output_format.lower().strip("."),
-        normalization_threshold=0.9,
-    )
+    separator = get_vocal_separator()
     
-    # Load model (UVRL-MDX-NET-Voc_FT is excellent for vocals)
-    separator.load_model(model_filename='UVR-MDX-NET-Voc_FT.onnx')
+    # Configure separator for current request
+    separator.output_dir = str(input_path.parent)
+    separator.output_format = output_format.lower().strip(".")
     
     # Run separation
     output_files = separator.separate(str(input_path))

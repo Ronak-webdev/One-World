@@ -18,38 +18,81 @@ def process_pitch_shift(
     job_id: str
 ) -> Path:
     try:
-        import soundfile as sf
-        import pedalboard
-        from pedalboard import Pedalboard, PitchShift, Reverb, Delay, Distortion
+        import torch
+        import torchaudio
+        import torchaudio.transforms as T
+        from core.gpu_utils import get_device
     except Exception as exc:
-        raise NotImplementedError("soundfile and pedalboard are required for pitch shifting") from exc
+        raise NotImplementedError("torchaudio is required for pitch shifting") from exc
 
-    y, sr = sf.read(input_path)
-    if y.ndim > 1:
-        y = y.T
+    device = get_device()
     
-    # Process speed & pitch first using high-quality stretch
-    if semitones != 0 or speed != 1.0:
-        y = pedalboard.time_stretch(
-            input_audio=y,
-            samplerate=sr,
-            stretch_factor=speed,
-            pitch_shift_in_semitones=semitones,
-            high_quality=True
-        )
+    # Load audio
+    waveform, sr = torchaudio.load(input_path)
+    if device == "cuda":
+        waveform = waveform.cuda()
+        
+    # 1. GPU Pitch Shifting
+    if semitones != 0:
+        waveform = torchaudio.functional.pitch_shift(waveform, sr, n_steps=semitones)
+        
+    # 2. GPU Time Stretching (replaces CPU pedalboard.time_stretch)
+    if speed != 1.0:
+        n_fft = 2048
+        hop_length = 512
+        spec_transform = T.Spectrogram(n_fft=n_fft, hop_length=hop_length, power=None).to(device)
+        time_stretch = T.TimeStretch(hop_length=hop_length, n_freq=n_fft // 2 + 1).to(device)
+        inv_spec = T.InverseSpectrogram(n_fft=n_fft, hop_length=hop_length).to(device)
+        
+        spec = spec_transform(waveform)
+        stretched = time_stretch(spec, 1.0 / speed)  # speed > 1 = faster = compress
+        waveform = inv_spec(stretched)
 
-    board = Pedalboard()
+    # 3. GPU Distortion — simple hard clipping / waveshaping
     if distortion > 0:
-        board.append(Distortion(drive_db=distortion * 20)) # scale to dB
+        gain = 1.0 + distortion * 20.0
+        waveform = torch.tanh(waveform * gain) / max(torch.tanh(torch.tensor(gain)).item(), 1e-6)
+    
+    # 4. GPU Delay — add a delayed copy of the signal
     if delay > 0:
-        board.append(Delay(delay_seconds=0.5, feedback=delay, mix=delay))
+        delay_samples = int(0.5 * sr)  # 500ms delay
+        feedback = delay
+        mix = delay
+        
+        delayed = torch.zeros_like(waveform)
+        if delay_samples < waveform.shape[-1]:
+            delayed[..., delay_samples:] = waveform[..., :-delay_samples] * feedback
+        waveform = waveform * (1.0 - mix) + (waveform + delayed) * mix
+    
+    # 5. GPU Reverb — simple convolution reverb using exponential decay IR
     if reverb > 0:
-        board.append(Reverb(room_size=reverb, wet_level=reverb))
-
-    shifted = board(y, sr, reset=False)
-
+        ir_length = int(sr * reverb * 2)  # reverb tail length
+        ir_length = max(1024, min(ir_length, sr * 3))  # clamp to 0.02s - 3s
+        
+        t = torch.linspace(0, 1, ir_length, device=waveform.device)
+        ir = torch.randn(ir_length, device=waveform.device) * torch.exp(-t * (5.0 - reverb * 4.0))
+        ir = ir / ir.norm()
+        
+        # Convolve each channel with IR using FFT (fast on GPU)
+        import torch.nn.functional as F
+        ir_kernel = ir.unsqueeze(0).unsqueeze(0)  # [1, 1, ir_length]
+        
+        wet_channels = []
+        for ch in range(waveform.shape[0]):
+            ch_data = waveform[ch:ch+1, :].unsqueeze(0)  # [1, 1, length]
+            wet = F.conv1d(ch_data, ir_kernel, padding=ir_length // 2)
+            wet_channels.append(wet.squeeze(0).squeeze(0)[:waveform.shape[-1]])
+        
+        wet = torch.stack(wet_channels)
+        waveform = waveform * (1.0 - reverb * 0.5) + wet * (reverb * 0.5)
+    
+    # Normalize to prevent clipping
+    peak = waveform.abs().max()
+    if peak > 1.0:
+        waveform = waveform / peak
+        
     out_path = output_path(job_id, ".wav")
-    sf.write(out_path, shifted.T if getattr(shifted, "ndim", 1) > 1 else shifted, sr)
+    torchaudio.save(str(out_path), waveform.cpu(), sr)
     return out_path
 
 

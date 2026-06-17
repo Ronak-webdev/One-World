@@ -11,23 +11,22 @@ from core.gpu_utils import get_device, clear_vram, get_autocast_context
 
 router = APIRouter()
 
-# Global cache to prevent reloading the model on every request
-_birefnet_model = None
+from core.model_cache import ModelManager
+
+def load_birefnet():
+    from transformers import AutoModelForImageSegmentation
+    device = get_device()
+    model = AutoModelForImageSegmentation.from_pretrained(
+        "ZhengPeng7/BiRefNet", trust_remote_code=True
+    ).to(device)
+    if device == "cuda":
+        model = model.half()
+    model.eval()
+    print(f"[BiRefNet] Loaded on {device} ({'FP16' if device == 'cuda' else 'FP32'})")
+    return model
 
 def get_birefnet_model():
-    global _birefnet_model
-    if _birefnet_model is None:
-        from transformers import AutoModelForImageSegmentation
-        device = get_device()
-        _birefnet_model = AutoModelForImageSegmentation.from_pretrained(
-            "ZhengPeng7/BiRefNet", trust_remote_code=True
-        ).to(device)
-        # Use FP16 on GPU for ~2× faster inference
-        if device == "cuda":
-            _birefnet_model = _birefnet_model.half()
-        _birefnet_model.eval()
-        print(f"[BiRefNet] Loaded on {device} ({'FP16' if device == 'cuda' else 'FP32'})")
-    return _birefnet_model
+    return ModelManager.get_model("birefnet", load_birefnet)
 
 def process_remove_background(
     input_path: Path, 

@@ -9,13 +9,10 @@ from core.job_queue import enqueue_upload_job
 
 router = APIRouter()
 
-# Global caches
-_esrgan_models = {}
-_gfpgan_model = None
+from core.model_cache import ModelManager
 
 def get_esrgan_model(scale: int):
-    global _esrgan_models
-    if scale not in _esrgan_models:
+    def load_esrgan():
         import torch
         from basicsr.archs.rrdbnet_arch import RRDBNet
         from realesrgan import RealESRGANer
@@ -51,13 +48,12 @@ def get_esrgan_model(scale: int):
             device=torch.device(device) if device == "cuda" else None
         )
         print(f"[RealESRGAN x{model_scale}] Loaded on {device}")
-        _esrgan_models[scale] = bg_upsampler
+        return bg_upsampler
         
-    return _esrgan_models[scale]
+    return ModelManager.get_model(f"esrgan_x{scale}", load_esrgan)
 
 def get_gfpgan_model():
-    global _gfpgan_model
-    if _gfpgan_model is None:
+    def load_gfpgan():
         import torch
         from gfpgan import GFPGANer
         
@@ -77,7 +73,9 @@ def get_gfpgan_model():
             device=torch.device(device) if device == "cuda" else None
         )
         print(f"[GFPGAN] Loaded on {device}")
-    return _gfpgan_model
+        return restorer
+        
+    return ModelManager.get_model("gfpgan", load_gfpgan)
 
 def process_upscale(input_path: Path, job_id: str, scale: int = 4, face_enhance: str = "false", sharpness: int = 0) -> Path:
     try:
