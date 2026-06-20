@@ -89,7 +89,7 @@ function ToolCards() {
           <div className="flex items-center justify-between text-xs text-[var(--text-2)] mb-1">
             <span className="font-mono flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              WaveBrain DAW
+              OneWorld DAW
             </span>
             <span className="text-accent">GPU queue active</span>
           </div>
@@ -143,7 +143,7 @@ export function AudioSection() {
             Four models.<br />One interface.
           </h2>
           <p className="mt-4 text-sm leading-6 text-[var(--text-2)]">
-            The local WaveBrain engine exposes separation, transcription, enhancement, and DSP utilities through one queue.
+            The local OneWorld engine exposes separation, transcription, enhancement, and DSP utilities through one queue.
           </p>
 
           {/* Stats */}
@@ -180,7 +180,7 @@ export function AudioSection() {
               Four models.<br />One interface.
             </h2>
             <p className="mt-6 max-w-xs text-sm leading-6 text-[var(--text-2)]">
-              The local WaveBrain engine exposes separation, transcription, enhancement, and DSP utilities through one queue.
+              The local OneWorld engine exposes separation, transcription, enhancement, and DSP utilities through one queue.
             </p>
             <div className="mt-8 grid grid-cols-2 gap-3">
               {[["8", "Tools"], ["4", "AI Models"], ["99+", "Languages"], ["0", "Cloud upload"]].map(([val, label]) => (

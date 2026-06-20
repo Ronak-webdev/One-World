@@ -23,7 +23,7 @@ function Sphere() {
 export function WireframeSphere() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4], fov: 45 }}>
         <Sphere />
       </Canvas>
     </div>

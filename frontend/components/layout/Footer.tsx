@@ -40,7 +40,7 @@ export function Footer() {
         <div>
           <h3 className="text-xs font-semibold uppercase text-white">Team</h3>
           <p className="mt-4 text-sm leading-6 text-text-darkSecondary">Built by Ronak, Satvik, and Dhruv.</p>
-          <p className="mt-2 text-sm leading-6 text-text-darkSecondary">WaveBrain audio engine under the hood.</p>
+          <p className="mt-2 text-sm leading-6 text-text-darkSecondary">OneWorld audio engine under the hood.</p>
         </div>
       </div>
       <div className="border-t border-white/[0.04]">

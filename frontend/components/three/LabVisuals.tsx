@@ -19,7 +19,7 @@ function RotatingMesh({ children }: { children: React.ReactNode }) {
 export function VideoVisual() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
         <Float speed={2} rotationIntensity={1} floatIntensity={1}>
@@ -35,7 +35,7 @@ export function VideoVisual() {
 export function Model3DVisual() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
         <RotatingMesh>
           <sphereGeometry args={[1.4, 32, 32]} />
@@ -49,7 +49,7 @@ export function Model3DVisual() {
 export function AvatarVisual() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
         <Float speed={3} rotationIntensity={2} floatIntensity={2}>
           <Torus args={[1, 0.3, 16, 32]}>
@@ -64,7 +64,7 @@ export function AvatarVisual() {
 export function StyleVisual() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[-10, -10, -10]} color="#34C759" />
         <RotatingMesh>
@@ -79,7 +79,7 @@ export function StyleVisual() {
 export function DocumentVisual() {
   return (
     <div className="h-full w-full">
-      <Canvas camera={{ position: [0, 0, 4] }}>
+      <Canvas dpr={[1, 1.5]} gl={{ powerPreference: "high-performance", antialias: false }} camera={{ position: [0, 0, 4] }}>
         <ambientLight intensity={0.5} />
         <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
           <Icosahedron args={[1.3, 1]}>

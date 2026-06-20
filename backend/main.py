@@ -29,11 +29,11 @@ from routers.image import background_remover, batch_processor, enhancer, filters
 from routers.lab import lab_jobs, placeholders, style_transfer, ollama
 
 app = FastAPI(
-    title="One World WaveBrain Backend",
+    title="OneWorld Backend",
     version="0.1.1",
     description="Local AI toolkit backend - RELOAD VERIFIED v2",
 )
-print("[Backend] WaveBrain Studio Backend is starting...")
+print("[Backend] OneWorld Studio Backend is starting...")
 
 # Apply all GPU performance flags before any model is loaded
 configure_gpu()
@@ -86,7 +86,7 @@ app.add_middleware(
 async def health() -> dict:
     return {
         "status": "ok",
-        "service": "one-world-wavebrain",
+        "service": "oneworld",
         "temp_dir": str(settings.temp_dir),
         "gpu_enabled": settings.gpu_enabled,
     }

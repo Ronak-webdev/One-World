@@ -1,4 +1,4 @@
-# 🌊 WaveBrain AI Studio
+# 🌊 OneWorld AI Studio
 
 <div align="center">
   <img src="https://img.shields.io/badge/Frontend-Next.js_14-black?style=for-the-badge&logo=next.js" alt="Next.js" />
@@ -9,7 +9,7 @@
 
 <br />
 
-**WaveBrain** is a comprehensive, local-first AI toolkit designed for media processing. It bridges a stunning, interactive WebGL frontend with a heavily optimized, GPU-accelerated Python backend. From vocal isolation to high-resolution image upscaling, WaveBrain handles complex multi-model pipelines completely locally, ensuring zero cloud dependency and maximum privacy.
+**OneWorld** is a comprehensive, local-first AI toolkit designed for media processing. It bridges a stunning, interactive WebGL frontend with a heavily optimized, GPU-accelerated Python backend. From vocal isolation to high-resolution image upscaling, OneWorld handles complex multi-model pipelines completely locally, ensuring zero cloud dependency and maximum privacy.
 
 This project was developed as part of our **Engineering Immersion Program (EIP) Academic Project**.
 
@@ -18,7 +18,7 @@ This project was developed as part of our **Engineering Immersion Program (EIP) 
 ## ✨ Key Features
 
 ### 🎨 Next-Generation Frontend Architecture (Core Focus)
-The frontend of WaveBrain is designed to provide a highly immersive, native-app-like experience in the browser:
+The frontend of OneWorld is designed to provide a highly immersive, native-app-like experience in the browser:
 * **Interactive 3D Environments**: Built with **Three.js** and **React Three Fiber (R3F)** to render beautiful, responsive 3D elements and backgrounds.
 * **Fluid Animations**: Leveraging **Framer Motion** for buttery-smooth page transitions, micro-interactions, and complex UI states.
 * **Modern Stack**: Developed with **Next.js 14 (App Router)** and **TypeScript** for optimal performance, SEO, and developer experience.
@@ -96,7 +96,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 ## 🌍 Deployment Guide
 
-WaveBrain's architecture cleanly separates the client UI from the heavy AI processing, allowing for a hybrid deployment strategy.
+OneWorld's architecture cleanly separates the client UI from the heavy AI processing, allowing for a hybrid deployment strategy.
 
 ### 1. Frontend (Vercel)
 The frontend is 100% statically renderable and can be hosted for free.
